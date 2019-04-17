@@ -41,5 +41,31 @@ public class CityController {
         return ResponseEntity.status(HttpStatus.OK).headers(headers).body(city.toString());
     }
 
-    // write delete mapping
+    @DeleteMapping("/{name}")
+    ResponseEntity<String> deleteCity(@PathVariable String name){
+        City city = cityRepository.findByCityName(name);
+        if (city == null){
+            return ResponseEntity.badRequest().body("There is no city named: " + name);
+        }
+        try {
+            cityRepository.delete(city);
+        }catch (RuntimeException exception){
+            return ResponseEntity.unprocessableEntity().body("Delete operation failed");
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(city.toString());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateCity(@PathVariable("id") final long id, @RequestBody City cityFromRequest){
+
+        City city = cityRepository.findByCityId(id)
+                .map(x -> {
+                    x.setCityName(cityFromRequest.getCityName());
+                    return cityRepository.save(x);
+                }).orElseGet(() -> {
+                    cityFromRequest.setCityId(id);
+                    return cityRepository.save(cityFromRequest);
+                });
+        return new ResponseEntity<>(city, HttpStatus.OK);
+    }
 }
